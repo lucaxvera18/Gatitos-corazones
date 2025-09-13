@@ -5,96 +5,96 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Para la más linda ❤️</title>
 <style>
-  html,body {height:100%;margin:0;background:#0b0f1a;display:flex;align-items:center;justify-content:center;}
-  .wrap { width: 100vw; height: 100vh; }
+  html,body {margin:0;height:100%;background:#000;display:flex;align-items:center;justify-content:center;}
   canvas {
-    width:100%;
-    height:100%;
+    width:100vw;height:100vh;
     image-rendering: pixelated;
     display:block;
-    background: linear-gradient(#071026 0%, #021018 60%);
+    background:linear-gradient(#050a18,#0b0f26);
   }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <canvas id="c"></canvas>
-  </div>
-
+<canvas id="c"></canvas>
 <script>
-const canvas = document.getElementById('c');
-const ctx = canvas.getContext('2d', { alpha: false });
-const W = 320, H = 180;
-canvas.width = W; canvas.height = H;
-ctx.imageSmoothingEnabled = false;
+const canvas=document.getElementById("c");
+const ctx=canvas.getContext("2d");
+const W=320,H=180;
+canvas.width=W;canvas.height=H;
+ctx.imageSmoothingEnabled=false;
 
 // --- estrellas ---
-const stars = [];
-for (let i=0;i<150;i++){
-  stars.push({x:Math.random()*W,y:Math.random()*H,s:Math.random()<0.7?1:2,a:Math.random()*0.8});
-}
+const stars=[...Array(200)].map(()=>({x:Math.random()*W,y:Math.random()*H,s:Math.random()<0.7?1:2}));
 
-// --- gatitos detallados ---
-function drawKitten(ctx, px, py, flip=false) {
+// --- sprites gatitos detallados (16x16 pixel maps) ---
+function drawSprite(map,px,py,scale=1,flip=false){
   ctx.save();
-  if (flip){ctx.translate(px,py);ctx.scale(-1,1);ctx.translate(-px,-py);}
-  const s=1;
-  const parts=[
-    {x:-12,y:-20,w:24,h:12,c:"#d9c2a6"}, // body
-    {x:-10,y:-26,w:20,h:8,c:"#c2a88d"},  // upper body
-    {x:-8,y:-32,w:16,h:8,c:"#d9c2a6"},   // head
-    {x:-10,y:-36,w:6,h:6,c:"#c2a88d"},   // ear L
-    {x:4,y:-36,w:6,h:6,c:"#c2a88d"},     // ear R
-    {x:-8,y:-30,w:3,h:3,c:"#000"},       // eye L
-    {x:5,y:-30,w:3,h:3,c:"#000"},        // eye R
-    {x:-6,y:-26,w:3,h:2,c:"#f79ab3"},    // blush L
-    {x:5,y:-26,w:3,h:2,c:"#f79ab3"},     // blush R
-    {x:-1,y:-26,w:2,h:1,c:"#000"}        // mouth
-  ];
-  for (let p of parts){ctx.fillStyle=p.c;ctx.fillRect(px+p.x*s,py+p.y*s,p.w*s,p.h*s);}
+  if(flip){ctx.translate(px+map[0].length*scale,py);ctx.scale(-1,1);}
+  map.forEach((row,y)=>{
+    row.forEach((col,x)=>{
+      if(col){ctx.fillStyle=col;ctx.fillRect(px+x*scale,py+y*scale,scale,scale);}
+    });
+  });
   ctx.restore();
 }
+// gris
+const catGray=[
+ [null,null,"#888","#888",null,null,"#fa9",null,null,"#888","#888",null],
+ [null,"#888","#ccc","#ccc","#888",null,null,"#888","#ccc","#ccc","#888",null],
+ ["#888","#ccc","#fff","#fff","#ccc","#888","#888","#ccc","#fff","#fff","#ccc","#888"],
+ ["#888","#ccc","#000","#fff","#ccc","#888","#888","#ccc","#fff","#000","#ccc","#888"],
+ ["#888","#ccc","#fff","#000","#ccc","#888","#888","#ccc","#000","#fff","#ccc","#888"],
+ ["#888","#ccc","#fff","#fff","#ccc","#888","#888","#ccc","#fff","#fff","#ccc","#888"],
+ [null,"#888","#ccc","#ccc","#888",null,null,"#888","#ccc","#ccc","#888",null],
+ [null,null,"#888","#888",null,null,null,null,"#888","#888",null,null]
+];
+// naranja
+const catOrange=catGray.map(r=>r.map(c=>{
+  if(c==="#888")return"#c63";
+  if(c==="#ccc")return"#f93";
+  if(c==="#fff")return"#ffd";
+  return c;
+}));
 
-// --- corazón pixel ---
-const heartPattern = [
+// --- corazón ---
+const heartPattern=[
  [0,1,1,0],
  [1,1,1,1],
  [1,1,1,1],
  [0,1,1,0],
  [0,0,1,0]
 ];
-function drawHeart(ctx,x,y,size,color){
+function drawHeart(x,y,s,color){
   ctx.fillStyle=color;
-  for (let j=0;j<heartPattern.length;j++)
-    for (let i=0;i<heartPattern[j].length;i++)
-      if(heartPattern[j][i])
-        ctx.fillRect(Math.round(x+i*size),Math.round(y+j*size),size,size);
+  heartPattern.forEach((row,yy)=>{
+    row.forEach((v,xx)=>{
+      if(v)ctx.fillRect(x+xx*s,y+yy*s,s,s);
+    });
+  });
 }
 
 // --- partículas ---
-const particles=[];
+let parts=[];
 function emit(x,y,color){
-  const a=(-Math.PI/2)+(Math.random()-0.5)*1;
-  const v=0.8+Math.random()*1;
-  particles.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-0.5,size:1,color,life:0,ttl:200,state:"free"});
+  const a=-Math.PI/2+(Math.random()-0.5)*1.2;
+  const v=0.8+Math.random();
+  parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-0.5,c:color,s:1+Math.random(),life:0,ttl:200,state:"free"});
 }
 
 // --- texto como destino ---
 const phrase="para la más linda ❤️";
 const off=document.createElement("canvas"),octx=off.getContext("2d");
 function sampleTargets(){
-  off.width=W*4;off.height=H*4;
+  off.width=W*8;off.height=H*8;
   octx.clearRect(0,0,off.width,off.height);
-  octx.fillStyle="white";
-  octx.font=`bold ${Math.floor(off.height*0.25)}px "Segoe UI Emoji","Arial"`;
+  octx.font=`bold ${Math.floor(off.height*0.3)}px "Segoe UI Emoji","Arial"`;
   octx.textAlign="center";octx.textBaseline="middle";
-  octx.fillText(phrase,off.width/2,off.height/2);
-  const data=octx.getImageData(0,0,off.width,off.height).data;
-  const pts=[];const step=3;
-  for(let y=0;y<off.height;y+=step){
-    for(let x=0;x<off.width;x+=step){
-      const a=data[(y*off.width+x)*4+3];
-      if(a>128){
+  octx.fillStyle="white";octx.fillText(phrase,off.width/2,off.height/2);
+  const d=octx.getImageData(0,0,off.width,off.height).data;
+  const pts=[];
+  for(let y=0;y<off.height;y+=2){
+    for(let x=0;x<off.width;x+=2){
+      if(d[(y*off.width+x)*4+3]>128){
         pts.push({x:Math.round(x/off.width*W),y:Math.round(y/off.height*H)});
       }
     }
@@ -103,50 +103,37 @@ function sampleTargets(){
 }
 let targets=sampleTargets();
 
-// --- control ---
-const left={x:W*0.2,y:H*0.8}, right={x:W*0.8,y:H*0.8};
-let t=0, attract=false, attractTime=0;
-
+// --- animación ---
+let t=0,mode="free",switchT=0;
 function loop(){
   t++;
-  // toggle atracción
-  if(!attract && t%400===0){assign();attract=true;attractTime=t;}
-  if(attract && t-attractTime>250){release();attract=false;}
-  if(Math.random()<0.8)emit(left.x,left.y,"#ff7da8");
-  if(Math.random()<0.8)emit(right.x,right.y,"#ffd97f");
-  update(); render();
-  requestAnimationFrame(loop);
+  if(mode==="free"&&t-switchT>300){assign();mode="text";switchT=t;}
+  if(mode==="text"&&t-switchT>200){release();mode="free";switchT=t;}
+  if(Math.random()<0.7)emit(W*0.2,H*0.8,"#f77");
+  if(Math.random()<0.7)emit(W*0.8,H*0.8,"#ff7");
+  update();render();requestAnimationFrame(loop);
 }
-
 function assign(){
-  const sel=targets.sort(()=>Math.random()-0.5).slice(0,500);
+  const sel=targets.slice(0,600);
   for(let i=0;i<sel.length;i++){
-    if(particles[i]){
-      particles[i].state="target";
-      particles[i].tx=sel[i].x;particles[i].ty=sel[i].y;
-    }
+    if(parts[i]){parts[i].state="target";parts[i].tx=sel[i].x;parts[i].ty=sel[i].y;}
   }
 }
-function release(){for(let p of particles)p.state="free";}
-
+function release(){for(let p of parts)p.state="free";}
 function update(){
-  for(let i=particles.length-1;i>=0;i--){
-    let p=particles[i];p.life++;
+  for(let i=parts.length-1;i>=0;i--){
+    let p=parts[i];p.life++;
     if(p.state==="free"){p.vy+=0.02;p.x+=p.vx;p.y+=p.vy;}
-    else{
-      p.vx+=(p.tx-p.x)*0.05;p.vy+=(p.ty-p.y)*0.05;
-      p.vx*=0.7;p.vy*=0.7;p.x+=p.vx;p.y+=p.vy;
-    }
-    if(p.life>p.ttl)particles.splice(i,1);
+    else{p.vx+=(p.tx-p.x)*0.05;p.vy+=(p.ty-p.y)*0.05;p.vx*=0.7;p.vy*=0.7;p.x+=p.vx;p.y+=p.vy;}
+    if(p.life>p.ttl)parts.splice(i,1);
   }
 }
-
 function render(){
-  ctx.fillStyle="#071026";ctx.fillRect(0,0,W,H);
-  for(let s of stars){ctx.fillStyle=`rgba(255,255,255,${0.2+Math.random()*0.8})`;ctx.fillRect(s.x,s.y,s.s,s.s);}
-  drawKitten(ctx,W*0.18,H*0.85,false);
-  drawKitten(ctx,W*0.82,H*0.85,true);
-  for(let p of particles)drawHeart(ctx,p.x,p.y,p.size,p.color);
+  ctx.fillStyle="#000";ctx.fillRect(0,0,W,H);
+  for(let s of stars)ctx.fillRect(s.x,s.y,s.s,s.s);
+  drawSprite(catGray,40,H-40,2,false);
+  drawSprite(catOrange,W-64,H-40,2,true);
+  for(let p of parts)drawHeart(Math.round(p.x),Math.round(p.y),p.s,p.c);
 }
 loop();
 </script>
